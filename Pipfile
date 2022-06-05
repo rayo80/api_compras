@@ -1,0 +1,19 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+django = "4.0.3"
+django-simple-history = "==3.0.0"
+djangorestframework = "==3.13.1"
+pillow = "9.0.1"
+django-dynamic-fixture = "*"
+
+[dev-packages]
+flake8 = "*"
+black = "*"
+faker = "*"
+
+[requires]
+python_version = "3.9"
