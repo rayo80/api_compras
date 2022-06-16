@@ -1,7 +1,7 @@
 from django.db import models
-
 from apps.base.models import BaseModel
 from apps.products.models import Product
+# from django.db.models.signals import post_save, post_delete
 
 
 class Supplier(BaseModel):
@@ -110,3 +110,24 @@ class Item(models.Model):
 
     def decrement_stock(self, *args, **kwargs):
         self.producto.stock -= self.cantidad
+
+    """
+    # Idea por signals
+    def aument_product(sender, instance, **kwargs):
+        item = instance.id
+        purchase = instance.compra
+        if purchase.state:  # la compra existe
+            print(item)
+            print("aumento")
+
+    def reduce_product(sender, instance, **kwargs):
+        item = instance.id
+        purchase = instance.compra
+        if purchase:
+            print(item)
+            print("decremento")
+
+
+    post_save.connect(aument_product, sender=Item)
+    post_delete.connect(reduce_product, sender=Item)
+    """

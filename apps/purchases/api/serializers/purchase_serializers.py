@@ -1,30 +1,38 @@
-from collections import OrderedDict
 from decimal import Decimal
-from itertools import product
 from rest_framework import serializers
-from rest_framework.relations import PKOnlyObject
-from rest_framework.fields import SkipField
-from datetime import datetime
 from apps.purchases.models import Purchase, Item
 
 
 class ItemPurchaseListSerializer(serializers.ListSerializer):
 
     def create(self, validated_data):
-        cantidad = validated_data['cantidad']
-        producto = validated_data['producto']
-        producto.stock += cantidad
-        instance = super().create(validated_data)
-        instance.increment_stock()
-
-        return instance
+        # validated_data es una lista
+        instance_items = super().create(validated_data)
+        # una vez se crea la instancia que se realice el incrememento
+        for item in instance_items:
+            item.increment_stock()
+        return instance_items
 
     def update(self, instance, validated_data):
-        print("hola")
-        return instance
+        # una vez entramos aca decrementamos lo que agregaron los items
+        for item in instance:
+            item.decrement_stock()
+            # item.state = False
+            # item.save()
+            item.delete()
+        # como usamos el delete significa que borraremos todos los items
+        # ahora crearemos unos nuevos
+        instance_items = super().create(validated_data)
+        for item in instance_items:
+            item.increment_stock()
+        # instance.increment_stock()
+        return instance_items
 
     def delete(self, instance):
-        pass
+        for item in instance:
+            item.decrement_stock()
+            item.delete()
+        return instance
 
 class ItemPurchaseSerializer(serializers.ModelSerializer):
 
@@ -39,27 +47,12 @@ class ItemPurchaseSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("La cantidad no puede ser 0", code='cant_zero')
         return value
 
-    def create(self, validated_data):
-        cantidad = validated_data['cantidad']
-        producto = validated_data['producto']
-        producto.stock += cantidad
-        instance = super().create(validated_data)
-        instance.increment_stock()
-
-        return instance
-
-    def update(self, instance, validated_data):
-        print("hola")
-        return instance
-
-
 class PurchaseReadSerializer(serializers.ModelSerializer):
 
     items = serializers.SerializerMethodField()
 
     def get_items(self, instance):
-        qs = Item.objects.filter(state=True,
-                                 compra__id=instance.id)
+        qs = Item.objects.filter(state=True)
         data = ItemPurchaseSerializer(qs, many=True).data
         return data
 
@@ -90,6 +83,10 @@ class PurchaseWriteSerializer(serializers.ModelSerializer):
     def validate_items(self, value):
         if len(value) == 0:
             raise serializers.ValidationError("Debe enviar al menos un item", code='no_items')
+
+        # item for item has diferent product
+        if len(set(item['producto'] for item in value)) != len(value):
+            raise serializers.ValidationError("Solo un item por producto", code='not_same_product')
         return value
 
     def validate_total(self, value):
@@ -147,46 +144,40 @@ class PurchaseWriteSerializer(serializers.ModelSerializer):
 
         if attrs['fecha_documento'] > attrs['fecha_vencimiento']:
             raise serializers.ValidationError(
-                {"fecha_vencimiento": "La fecha de vencimiento es menor que la fecha de documento"}, 
+                {"fecha_vencimiento": "La fecha de vencimiento es menor que la fecha de documento"},
                 code='fven<fdoc')
         return attrs
 
     def create(self, validated_data):
         items = validated_data.pop('items')
-        # dividimos el campo num_documento en serie y correlativo
-        serie, correlativo = validated_data['num_documento'].split('-')
-        validated_data['serie'] = serie
-        validated_data['correlativo'] = correlativo
         instance = super().create(validated_data)
-
         # seteamos el objeto purchase para cada item
         for item in items:
             item['compra'] = instance
 
-        # creamos los items
-        print(self.fields['items'])
+        # creamos los items y ejecutamos la logica
         self.fields['items'].create(items)
         return instance
 
     def update(self, instance, validated_data):
         items_data = validated_data.pop('items')
         instance = super().update(instance, validated_data)
+        actual_items = instance.items.all()
 
-        # los items actuales los eliminamos y creamos unos nuevos
-        # aca solo acceso a todos los items que se agregaron
-        actual_items = (instance.items).all()
-
-        # desactivo los items y reduzco el stock que habian agregado
-        actual_items.update(state=False)
-
-        # reducimos el stock que se tenia en la compra
-        """
-        for item in actual_items:
-            item.producto.stock -= item.cantidad
-        """
+        # relacionamos los nuevos items con la compra
         for item in items_data:
             item['compra'] = instance
 
-        # creamos todos los items
-        self.fields['items'].update(items_data, validated_data)
+        # enviamos los items actuales y ejecutamos la logica
+        self.fields['items'].update(actual_items, items_data)
+        return instance
+
+    def destroy(self, instance):
+        # los items actuales los eliminamos.
+        instance.state = False
+        instance.save()
+        actual_items = instance.items.all()
+        # actual_items.update(state=False)
+        # mandamos a reducir el stock que agregaron
+        self.fields['items'].delete(actual_items)
         return instance
