@@ -1,4 +1,3 @@
-from operator import length_hint
 from apps.purchases.api.serializers.purchase_serializers import \
     PurchaseWriteSerializer, ItemPurchaseSerializer
 from apps.purchases.models import Purchase, Supplier, Product, Item
@@ -14,7 +13,7 @@ class ItemPurchaseSerializerTest(TestCase):
     def setUp(self):
         self.purchase = G(Purchase, id=100, num_documento="F001-8888")
         self.product1 = G(Product, stock=100)
-        self.product2 = G(Product, stock=200)
+        self.product2 = G(Product, stock=20)
         self.product3 = G(Product, stock=0)
         self.product4 = G(Product, stock=80)
 
@@ -135,12 +134,13 @@ class ItemPurchaseSerializerTest(TestCase):
         # si entro un item con el mismo product que reduzca y luego aumente
         diferencia = self.product1.stock-actual_stock
 
-        self.assertEqual(diferencia, instance[0].cantidad-lista_items[0].cantidad)
+        self.assertEqual(diferencia, instance[0].cantidad-lista_items[0].cantidad)  # 19-29
         self.assertEqual(diferencia, -10)
+        self.assertEqual(self.product1.stock, 90)
 
     def test_multiple_update_for_same_product(self):
         actual_stock1 = self.product1.stock  # stock:100
-        actual_stock2 = self.product2.stock  # stock:200
+        actual_stock2 = self.product2.stock  # stock:20
         actual_stock3 = self.product3.stock  # stock:0
         actual_stock4 = self.product4.stock  # stock:80
         test_data = self.to_created_data  # varios items
@@ -158,16 +158,18 @@ class ItemPurchaseSerializerTest(TestCase):
         serializer = ItemPurchaseSerializer(read_only=False, many=True)
         instance = serializer.update(lista_items, test_data)
 
+        # verificando la creacion de nuevos items con su cantidad
         self.assertEqual(instance[0].cantidad, 19)
         self.assertEqual(instance[1].cantidad, 25)
         self.assertEqual(instance[2].cantidad, 27)
+        # verificando que el stock haya variado
         self.assertEqual(variacion1, self.product1.stock-actual_stock1)  # -10
         self.assertEqual(variacion2, self.product2.stock-actual_stock2)  # -10
         self.assertEqual(variacion3, self.product3.stock-actual_stock3)  # 27
         self.assertEqual(variacion4, self.product4.stock-actual_stock4)  # -48
 
     # DELETE CASES
-    def test_delete_reduce_stock(self):
+    def test_delete_items(self):
         serializer = ItemPurchaseSerializer(read_only=False, many=True)
         # lista instancias actuales e la compra
         lista_items = [self.item_instance1, self.item_instance2,
@@ -180,6 +182,18 @@ class ItemPurchaseSerializerTest(TestCase):
         self.assertFalse(Item.objects.filter(
                          pk=self.item_instance3.id).exists())
 
+    def test_delete_reduce_stock(self):
+        actual_stock1 = self.product1.stock  # stock:100
+        actual_stock2 = self.product2.stock  # stock:20
+        serializer = ItemPurchaseSerializer(read_only=False, many=True)
+        # lista instancias actuales e la compra
+        lista_items = [self.item_instance1, self.item_instance2,
+                       self.item_instance3]  # 29,35,48(product4)
+        serializer.delete(lista_items)
+        print(self.product1.stock, self.product2.stock, self.product3.stock)
+        self.assertEqual(-lista_items[0].cantidad, self.product1.stock-actual_stock1)  # -10
+        self.assertEqual(-lista_items[1].cantidad, self.product2.stock-actual_stock2)  # -10
+        self.assertEqual(self.product4.stock, 32)  # 80-48
 
 class PurchaseWriteSerializerTest(TestCase):
 
@@ -421,7 +435,7 @@ class PurchaseWriteSerializerTest(TestCase):
         instance = serializer.save()
         self.assertEqual(instance.serie, serie)
         self.assertEqual(instance.correlativo, correlativo)
-        self.assertEqual(str(instance), 'Compra 1 F001-00004')
+        self.assertEqual(Purchase.objects.filter(id=instance.id).count(), 1)
         self.assertEqual(instance.id, 2)
         self.assertEqual(instance.items.count(), 2)
 
@@ -435,10 +449,11 @@ class PurchaseWriteSerializerTest(TestCase):
         instance = serializer.save()
         self.assertEqual(instance.serie, serie)
         self.assertEqual(instance.correlativo, correlativo)
-        self.assertEqual(str(instance), 'Compra 1 F001-00004')
+        self.assertEqual(Purchase.objects.filter(id=instance.id).count(), 1)
         self.assertEqual(instance.id, 2)
         self.assertEqual(instance.items.count(), 1)
 
+    # UPDATE CASES
     def test_update_serializer(self):
         test_data = self.serializer_data
         serializer = PurchaseWriteSerializer(self.purchase_instance, data=test_data)
@@ -465,6 +480,16 @@ class PurchaseWriteSerializerTest(TestCase):
         instance = serializer.save()
         # self.assertFalse(instance.items.all()[0].state)
         # self.assertFalse(instance.items.all()[1].state)
+        self.assertFalse(instance.items.filter(pk=1).exists())
+        self.assertFalse(instance.items.filter(pk=2).exists())
+
+    def test_update_detect_actual_items(self):
+        """Se detecta que los items que se tenian antes de la actualizacion se eliminan"""
+        test_data = self.serializer_data
+        serializer = PurchaseWriteSerializer(self.purchase_instance, data=test_data)
+        serializer.is_valid(raise_exception=True)
+        print(self.purchase_instance.items.all())
+        instance = serializer.save()
         self.assertFalse(instance.items.filter(pk=1).exists())
         self.assertFalse(instance.items.filter(pk=2).exists())
 

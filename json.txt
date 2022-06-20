@@ -86,3 +86,43 @@ Apunto los items por mientras
     "moneda": 1,
     "salida": null,
     "tipo_documento": 7
+
+//finall
+{
+    "id": 4,
+    "proveedor": 1,
+    "tipo_documento": "1",
+    "num_documento": "F001-00005",
+    "fecha_documento": "2022-04-01",
+    "serie": "F001",
+    "correlativo": "00005",
+    "total": "23",
+    "fecha_vencimiento": "2022-04-01",
+    "moneda": "PEN",
+    "items": [
+        {
+            "producto": 1,
+            "cantidad": 23,
+            "incluye_igv": true,
+            "total_item": "23.00"
+        }
+    ]
+}
+//Crear
+{
+    "proveedor": 1,
+    "tipo_documento": "1",
+    "num_documento": "F001-00005",
+    "fecha_documento": "2022-04-01",
+    "total": "27",
+    "fecha_vencimiento": "2022-04-01",
+    "moneda": "PEN",
+    "items": [
+        {
+            "producto": 1,
+            "cantidad": 23,
+            "incluye_igv": true,
+            "total_item": "27.00"
+        }
+    ]
+}

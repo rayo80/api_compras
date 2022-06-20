@@ -74,7 +74,7 @@ class Purchase(BaseModel):
 
     def __str__(self):
         """Unicode representation of Compra."""
-        return f'Compra {self.tipo_documento} {self.num_documento}'
+        return f'Compra {self.id} {self.num_documento}'
 
 
 class Item(models.Model):
@@ -106,10 +106,23 @@ class Item(models.Model):
 
     # LOGIC BUSSINES #
     def increment_stock(self, *args, **kwargs):
+        # este refresh actualiza el valor actual del stock
+        self.producto.refresh_from_db()
+        print(self.producto.stock)
         self.producto.stock += self.cantidad
+        self.producto.save()
+        print('Incrementing stock')
+        print(self.producto.stock)
+        return self.producto.stock
 
     def decrement_stock(self, *args, **kwargs):
+        self.producto.refresh_from_db()
+        print(self.producto.stock)
         self.producto.stock -= self.cantidad
+        self.producto.save()
+        print('Decrementing stock')
+        print(self.producto.stock)
+        return self.producto.stock
 
     """
     # Idea por signals

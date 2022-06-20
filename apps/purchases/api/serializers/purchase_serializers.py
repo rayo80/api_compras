@@ -1,6 +1,6 @@
 from decimal import Decimal
 from rest_framework import serializers
-from apps.purchases.models import Purchase, Item
+from apps.purchases.models import Purchase, Item, Supplier
 
 
 class ItemPurchaseListSerializer(serializers.ListSerializer):
@@ -15,22 +15,23 @@ class ItemPurchaseListSerializer(serializers.ListSerializer):
 
     def update(self, instance, validated_data):
         # una vez entramos aca decrementamos lo que agregaron los items
+        # y lo eliminamos
         for item in instance:
             item.decrement_stock()
-            # item.state = False
-            # item.save()
+            # item.producto.save()
             item.delete()
-        # como usamos el delete significa que borraremos todos los items
-        # ahora crearemos unos nuevos
+        # creamos los nuevos items
         instance_items = super().create(validated_data)
+        # una vez se crea la instancia que se realice el incremento
         for item in instance_items:
             item.increment_stock()
-        # instance.increment_stock()
+            # item.producto.save()
         return instance_items
 
     def delete(self, instance):
         for item in instance:
             item.decrement_stock()
+            # realizamos un cambio al stock hay que guardarlo
             item.delete()
         return instance
 
@@ -47,12 +48,19 @@ class ItemPurchaseSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("La cantidad no puede ser 0", code='cant_zero')
         return value
 
+class SupplierPurchaseSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Supplier
+        fields = ('id', 'name')
+
 class PurchaseReadSerializer(serializers.ModelSerializer):
 
     items = serializers.SerializerMethodField()
+    proveedor = SupplierPurchaseSerializer()
 
     def get_items(self, instance):
-        qs = Item.objects.filter(state=True)
+        qs = Item.objects.filter(compra__id=instance.id)
         data = ItemPurchaseSerializer(qs, many=True).data
         return data
 
@@ -161,14 +169,15 @@ class PurchaseWriteSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         items_data = validated_data.pop('items')
-        instance = super().update(instance, validated_data)
+        # actual_items = Item.objects.filter(compra__id=instance.id)
         actual_items = instance.items.all()
+        instance = super().update(instance, validated_data)
 
         # relacionamos los nuevos items con la compra
         for item in items_data:
             item['compra'] = instance
 
-        # enviamos los items actuales y ejecutamos la logica
+        # enviamos los items actuales con los items para crear los nuevos
         self.fields['items'].update(actual_items, items_data)
         return instance
 
@@ -176,8 +185,8 @@ class PurchaseWriteSerializer(serializers.ModelSerializer):
         # los items actuales los eliminamos.
         instance.state = False
         instance.save()
+        # obtenemos sus items para enviarlos a eliminar
         actual_items = instance.items.all()
-        # actual_items.update(state=False)
         # mandamos a reducir el stock que agregaron
         self.fields['items'].delete(actual_items)
         return instance
