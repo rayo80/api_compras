@@ -195,6 +195,7 @@ class ItemPurchaseSerializerTest(TestCase):
         self.assertEqual(-lista_items[1].cantidad, self.product2.stock-actual_stock2)  # -10
         self.assertEqual(self.product4.stock, 32)  # 80-48
 
+
 class PurchaseWriteSerializerTest(TestCase):
 
     def setUp(self):
@@ -427,7 +428,7 @@ class PurchaseWriteSerializerTest(TestCase):
         self.assertEqual(er.exception.detail['fecha_vencimiento'][0].code,
                          'fven<fdoc')
 
-    def test_create_multiple_items_serializer(self):
+    def test_create_multiple_fields_serializer(self):
         test_data = self.serializer_data
         serializer = PurchaseWriteSerializer(data=test_data)
         serie, correlativo = test_data['num_documento'].split('-')
@@ -444,13 +445,8 @@ class PurchaseWriteSerializerTest(TestCase):
         test_data["items"] = [test_data["items"][0]]
         test_data["total"] = test_data["items"][0]["total_item"]
         serializer = PurchaseWriteSerializer(data=test_data)
-        serie, correlativo = test_data['num_documento'].split('-')
         serializer.is_valid(raise_exception=True)
         instance = serializer.save()
-        self.assertEqual(instance.serie, serie)
-        self.assertEqual(instance.correlativo, correlativo)
-        self.assertEqual(Purchase.objects.filter(id=instance.id).count(), 1)
-        self.assertEqual(instance.id, 2)
         self.assertEqual(instance.items.count(), 1)
 
     # UPDATE CASES

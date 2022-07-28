@@ -1,29 +1,28 @@
 # from apps.purchases.tests.purchases_factories import SupplierFactory
 from rest_framework.test import APITestCase
 from apps.purchases.models import Supplier
-from faker import Faker
 
-faker = Faker()
 
 class SupplierFactory:
 
-    def build_supplier_JSON(self):
+    def build_supplier_json(self):
         return {
             "tipo_documento": '1',
             "num_documento": '15256698',
-            "name": faker.name(),
-            "address": faker.address(),
+            "legal_name": "Jhon Doe",
+            "address": "48764 Howard Forge Apt. 421\nVanessaside, PA 19763",
             "phone": "996666363",
-            "email": faker.email(),
+            "email": "elenasheremetev@skillion.org",
         }
 
     def create_supplier(self):
-        return Supplier.objects.create(**self.build_supplier_JSON())
+        return Supplier.objects.create(**self.build_supplier_json())
+
 
 class SupplierTestCase(APITestCase):
 
     def test_create_supplier(self):
-        supplier_data = SupplierFactory().build_supplier_JSON()
+        supplier_data = SupplierFactory().build_supplier_json()
         response = self.client.post('/purchases/supplier/',
                                     supplier_data,
                                     format='json')

@@ -6,7 +6,6 @@ from apps.base.models import BaseModel
 class MeasureUnit(BaseModel):
     """Model definition for MeasureUnit."""
 
-    # TODO: Define fields here
     description = models.CharField('Descripcion', max_length=50, blank=False, null=False, unique=True)
 
     class Meta:
@@ -28,7 +27,8 @@ class Product(BaseModel):
     description = models.TextField('Descripcion', blank=True, null=False)
     stock = models.IntegerField(null=False, default=0)
     price = models.DecimalField(default=0.00, max_digits=7, decimal_places=2, null=True)
-    measure_unit = models.ForeignKey(MeasureUnit, on_delete=models.CASCADE, verbose_name="Unidad de medida", null=True, blank=True)
+    measure_unit = models.ForeignKey(MeasureUnit, on_delete=models.CASCADE,
+                                     verbose_name="Unidad de medida", null=True, blank=True)
 
     class Meta:
         """Meta definition for Product."""

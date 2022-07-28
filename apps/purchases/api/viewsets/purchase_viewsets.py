@@ -5,14 +5,32 @@ from rest_framework.response import Response
 from apps.purchases.api.serializers.purchase_serializers import (
     PurchaseReadSerializer,
     PurchaseWriteSerializer,
+    PurchaseListSerializer,
 )
 from django.db import transaction
-# from django.db import transaction
+
 
 class PurchaseViewSet(viewsets.ModelViewSet):
 
     serializer_class = PurchaseReadSerializer
-    queryset = PurchaseWriteSerializer.Meta.model.objects.filter(state=True)
+    queryset = PurchaseWriteSerializer.Meta\
+        .model.objects.filter(state=True)\
+        .select_related('proveedor')\
+
+    # reemplazable por un MYMODELVIEWSET HOOK list---#
+    # Como deseo que la list no traiga los items cambio de serializador
+
+    action_serializers = {
+        'retrieve': PurchaseReadSerializer,
+        'list': PurchaseListSerializer,
+    }
+
+    def get_serializer_class(self):
+        if hasattr(self, 'action_serializers'):
+            return self.action_serializers.get(self.action, self.serializer_class)
+        return super(PurchaseViewSet, self).get_serializer_class()
+
+    # -------------#
 
     @transaction.atomic(using='default')
     def create(self, request, *args, **kwargs):
@@ -28,7 +46,6 @@ class PurchaseViewSet(viewsets.ModelViewSet):
         serializer = PurchaseWriteSerializer(instance, data=request.data)
         serializer.is_valid(raise_exception=True)
         purchase_updated = serializer.save()
-        print(purchase_updated)
         return Response(PurchaseReadSerializer(purchase_updated).data,
                         status=status.HTTP_201_CREATED)
 
@@ -39,8 +56,6 @@ class PurchaseViewSet(viewsets.ModelViewSet):
         serializer.destroy(instance)
         return Response({"message": "Eliminado"},
                         status=status.HTTP_204_NO_CONTENT)
-        # compra.anular_items
-        # delete items decrement stock
 
     """
     @transaction.atomic(using='default')

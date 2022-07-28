@@ -35,6 +35,7 @@ class ItemPurchaseListSerializer(serializers.ListSerializer):
             item.delete()
         return instance
 
+
 class ItemPurchaseSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -45,24 +46,44 @@ class ItemPurchaseSerializer(serializers.ModelSerializer):
 
     def validate_cantidad(self, value):
         if value == 0:
-            raise serializers.ValidationError("La cantidad no puede ser 0", code='cant_zero')
+            raise serializers.ValidationError("La cantidad no puede ser 0",
+                                              code='cant_zero')
         return value
+
+    def delete(self, instance):
+        pass
+
 
 class SupplierPurchaseSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Supplier
-        fields = ('id', 'name')
+        fields = ('id', 'legal_name')
+
+
+class PurchaseListSerializer(serializers.ModelSerializer):
+    proveedor = SupplierPurchaseSerializer()
+
+    class Meta:
+        model = Purchase
+        fields = ('id', 'proveedor', 'tipo_documento',
+                  'num_documento', 'fecha_documento',
+                  'serie', 'correlativo', 'total',
+                  'fecha_vencimiento', 'moneda')
+
 
 class PurchaseReadSerializer(serializers.ModelSerializer):
 
-    items = serializers.SerializerMethodField()
     proveedor = SupplierPurchaseSerializer()
+    items = ItemPurchaseSerializer(many=True)
 
-    def get_items(self, instance):
+    """
+    items = serializers.SerializerMethodField()
+        def get_items(self, instance):
         qs = Item.objects.filter(compra__id=instance.id)
         data = ItemPurchaseSerializer(qs, many=True).data
         return data
+    """
 
     class Meta:
         model = Purchase
@@ -74,8 +95,9 @@ class PurchaseReadSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         pass
 
-    def create(self, instance, validated_data):
+    def create(self, validated_data):
         pass
+
 
 class PurchaseWriteSerializer(serializers.ModelSerializer):
 
@@ -98,7 +120,7 @@ class PurchaseWriteSerializer(serializers.ModelSerializer):
         return value
 
     def validate_total(self, value):
-        if any(chr.isalpha() for chr in value):
+        if any(char.isalpha() for char in value):
             raise serializers.ValidationError("El valor contiene caracteres no numericos", code=2)
 
         value = round(Decimal(value), 2)
@@ -118,7 +140,7 @@ class PurchaseWriteSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("El valor de la serie no comienza con B o F", code='BorForE')
         """
 
-        if any(chr.isalpha() for chr in correlativo):
+        if any(char.isalpha() for char in correlativo):
             raise serializers.ValidationError("El valor de correlativo no tiene numeros", code='corr_non_num')
         return value
 

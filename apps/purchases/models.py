@@ -17,12 +17,13 @@ class Supplier(BaseModel):
 
     tipo_documento = models.CharField('tipo de documento', max_length=20, choices=DOCUMENT, default='RUC')
     num_documento = models.CharField(unique=True, max_length=11, blank=False, null=False)
-    name = models.CharField('Razón Social', unique=True, max_length=150, null=False, blank=False)
+    legal_name = models.CharField('Razón Social', unique=True, max_length=150, null=False, blank=False)
     address = models.CharField('Direccion', max_length=200, null=True, blank=False)
     phone = models.CharField(max_length=15, null=True, blank=True)
     email = models.EmailField(blank=True, null=True)
     cod_proveedor = models.CharField(max_length=50, blank=True, null=True, default=None)
-    type_person = models.CharField('Tipo de persona', max_length=4, choices=TYPE_PERSON, null=True, default='SIN ESPECIFICAR')
+    type_person = models.CharField('Tipo de persona', max_length=4, choices=TYPE_PERSON,
+                                   null=True, default='SIN ESPECIFICAR')
 
     class Meta:
         ordering = ['id']
@@ -30,13 +31,13 @@ class Supplier(BaseModel):
         verbose_name_plural = 'Proveedores'
 
     def __str__(self):
-        return self.name
+        return self.legal_name
 
     def to_dict(self):
         return {
             'id': self.id,
             'ruc': self.num_documento,
-            'name': self.name,
+            'name': self.legal_name,
             'address': self.address,
             'phone': self.phone,
             'email': self.email
@@ -107,7 +108,6 @@ class Item(models.Model):
     # LOGIC BUSSINES #
     def increment_stock(self, *args, **kwargs):
         # este refresh actualiza el valor actual del stock
-        self.producto.refresh_from_db()
         print(self.producto.stock)
         self.producto.stock += self.cantidad
         self.producto.save()
@@ -116,7 +116,6 @@ class Item(models.Model):
         return self.producto.stock
 
     def decrement_stock(self, *args, **kwargs):
-        self.producto.refresh_from_db()
         print(self.producto.stock)
         self.producto.stock -= self.cantidad
         self.producto.save()
@@ -125,7 +124,8 @@ class Item(models.Model):
         return self.producto.stock
 
     """
-    # Idea por signals
+
+    # Opcion por signals
     def aument_product(sender, instance, **kwargs):
         item = instance.id
         purchase = instance.compra
