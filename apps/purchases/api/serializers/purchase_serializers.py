@@ -40,7 +40,7 @@ class ItemPurchaseSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Item
-        fields = ('id', 'producto', 'cantidad', 'incluye_igv',
+        fields = ('id', 'producto', 'cantidad', 'igv',
                   'total_item')
         list_serializer_class = ItemPurchaseListSerializer
 
@@ -49,6 +49,15 @@ class ItemPurchaseSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("La cantidad no puede ser 0",
                                               code='cant_zero')
         return value
+
+    # Lo mas importante en la compra es el total y la cantidad
+    def validate(self, attrs):
+        if attrs["igv"]:
+            igv_int = attrs["total_item"]*18/118*100
+            if int(attrs["igv"]*100) != round(igv_int):
+                raise serializers.ValidationError("El IGV no coincide",
+                                                  code='dif_igv')
+        return attrs
 
     def delete(self, instance):
         pass
@@ -156,14 +165,6 @@ class PurchaseWriteSerializer(serializers.ModelSerializer):
         attrs['serie'] = serie
         attrs['correlativo'] = correlativo
 
-        """
-        suma = Decimal(0.00)
-        for value in attrs['items']:
-            suma = suma + value.get('total_item')
-        if suma != attrs['total']:
-            raise serializers.ValidationError(
-                {"total": "La sumatoria de precio items no coincide"}, code='dif_sum')
-        """
         suma = 0
         for value in attrs['items']:
             suma = suma + int(100*value.get('total_item'))

@@ -2,10 +2,8 @@ from apps.purchases.api.serializers.purchase_serializers import \
     PurchaseWriteSerializer, ItemPurchaseSerializer
 from apps.purchases.models import Purchase, Supplier, Product, Item
 from django.test import TestCase
-from faker import Faker
 from ddf import G
 from rest_framework.serializers import ValidationError
-faker = Faker()
 
 
 class ItemPurchaseSerializerTest(TestCase):
@@ -20,17 +18,15 @@ class ItemPurchaseSerializerTest(TestCase):
         self.serializer_data = {
             "producto": 1,
             "cantidad": 19,
-            "incluye_igv": True,
-            "igv": 3.6,
+            "igv": 4.88,
             "total_item": 32,
         }
 
         self.item_atributtes = {
             "producto": self.product1,
             "cantidad": 29,
-            "incluye_igv": True,
-            "igv": 3.6,
-            "total_item": 32,
+            "igv": 5.03,
+            "total_item": 33,
             "compra": self.purchase
         }
 
@@ -53,21 +49,18 @@ class ItemPurchaseSerializerTest(TestCase):
             {
                 "producto": self.product1,
                 "cantidad": 19,
-                "incluye_igv": True,
                 "total_item": 32,
-                "compra": self.purchase
+                "compra": self.purchase,
             },
             {
                 "producto": self.product2,
                 "cantidad": 25,
-                "incluye_igv": True,
                 "total_item": 26,
                 "compra": self.purchase
             },
             {
                 "producto": self.product3,
                 "cantidad": 27,
-                "incluye_igv": True,
                 "total_item": 35,
                 "compra": self.purchase
             }
@@ -82,16 +75,26 @@ class ItemPurchaseSerializerTest(TestCase):
             serializer.is_valid(raise_exception=True)
         self.assertEqual(er.exception.detail['cantidad'][0].code, 'cant_zero')
 
-    def test_incluye_igv_is_not_none(self):
+    # Valor exacto de IGV
+    def test_igv_amount_is_correct(self):
         test_data = self.serializer_data
-        test_data['incluye_igv'] = None
+        test_data['igv'] = 5.80
+        test_data['total_item'] = 38.00
+        serializer = ItemPurchaseSerializer(data=test_data)
+        self.assertEqual(serializer.is_valid(), True)
+
+    """
+        def test_igv_is_correctly_save(self):
+        test_data = self.serializer_data
+        test_data['igv'] = 5.80
+        test_data['total_item'] = 38.00
         serializer = ItemPurchaseSerializer(data=test_data)
         with self.assertRaises(ValidationError) as er:
             serializer.is_valid(raise_exception=True)
-        self.assertEqual(er.exception.detail['incluye_igv'][0].code,
-                         'null')
+        self.assertEqual(er.exception.detail['igv'][0].code,
+                         'dif_igv')
 
-    # FALTA VERIFICACION DE IGV
+    """
 
     def test_create_incrementa_stock(self):
         actual_stock = self.product1.stock
@@ -458,16 +461,6 @@ class PurchaseWriteSerializerTest(TestCase):
         self.assertEqual(str(instance), 'Compra 1 F001-00004')
         self.assertEqual(instance.id, 1)
 
-    """
-    def test_items_update_delete_previous(self):
-        test_data = self.serializer_data
-        # print(type(self.purchase_instance.items))
-        serializer = PurchaseWriteSerializer(self.purchase_instance, data=test_data)
-        serializer.is_valid(raise_exception=True)
-        instance = serializer.save()
-        self.assertFalse(instance.items.all()[0].state)
-        self.assertFalse(instance.items.all()[1].state)
-    """
     def test_update_purchase_delete_previous_items(self):
         """Los items que se tenian antes de la actualizacion se eliminan"""
         test_data = self.serializer_data
