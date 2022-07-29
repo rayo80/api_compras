@@ -41,10 +41,11 @@ class ItemPurchaseSerializer(serializers.ModelSerializer):
     igv = serializers.DecimalField(max_digits=6, decimal_places=2)
 
     def to_representation(self, instance):
+        print(instance)
         return{
             "id": instance.id,
             "cantidad": instance.cantidad,
-            "igv": instance.igv/100 if instance is not None else instance.igv,
+            "igv": instance.igv/100,
             "total_item": instance.total_item/100,
         }
 
@@ -96,7 +97,7 @@ class PurchaseListSerializer(serializers.ModelSerializer):
 
 
 class PurchaseReadSerializer(serializers.ModelSerializer):
-
+    total = serializers.DecimalField(max_digits=6, decimal_places=2)
     proveedor = SupplierPurchaseSerializer()
     items = ItemPurchaseSerializer(many=True)
 
@@ -107,6 +108,9 @@ class PurchaseReadSerializer(serializers.ModelSerializer):
         data = ItemPurchaseSerializer(qs, many=True).data
         return data
     """
+    def to_representation(self, instance):
+        instance.total = instance.total/100
+        return super().to_representation(instance)
 
     class Meta:
         model = Purchase
@@ -125,6 +129,7 @@ class PurchaseReadSerializer(serializers.ModelSerializer):
 class PurchaseWriteSerializer(serializers.ModelSerializer):
 
     # como es una lista many=True
+    total = serializers.DecimalField(max_digits=6, decimal_places=2)
     items = ItemPurchaseSerializer(many=True)
 
     class Meta:
@@ -143,11 +148,14 @@ class PurchaseWriteSerializer(serializers.ModelSerializer):
         return value
 
     def validate_total(self, value):
+        """
         if any(char.isalpha() for char in value):
             raise serializers.ValidationError("El valor contiene caracteres no numericos", code=2)
 
-        value = round(Decimal(value), 2)
-        return value
+            value = round(Decimal(value), 2)
+        """
+
+        return int(value*100)
 
     def validate_num_documento(self, value):
         if not ("-" in value):
@@ -183,7 +191,7 @@ class PurchaseWriteSerializer(serializers.ModelSerializer):
         for value in attrs['items']:
             suma = suma + value.get('total_item')
 
-        if suma != int(100*attrs['total']):
+        if suma != int(attrs['total']):
             raise serializers.ValidationError(
                 {"total": "La sumatoria de precio items no coincide"}, code='dif_sum')
 

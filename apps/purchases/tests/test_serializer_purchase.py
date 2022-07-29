@@ -303,12 +303,15 @@ class PurchaseWriteSerializerTest(TestCase):
                          'not_same_product')
 
     # validate_total
+    """
+    Antes ingresaba como string
     def test_validate_total_not_string(self):
         test_data = self.serializer_data
         test_data['total'] = 'sadasd'
         serializer = PurchaseWriteSerializer(data=test_data)
         serializer.is_valid()
         self.assertEqual(serializer.errors['total'][0].code, 2)
+    """
 
     def test_validate_total_is_not_none(self):
         test_data = self.serializer_data
@@ -321,8 +324,9 @@ class PurchaseWriteSerializerTest(TestCase):
         test_data = self.serializer_data
         test_data['total'] = ''
         serializer = PurchaseWriteSerializer(data=test_data)
-        serializer.is_valid()
-        self.assertEqual(serializer.errors['total'][0].code, 'blank')
+        with self.assertRaises(ValidationError) as er:
+            serializer.is_valid(raise_exception=True)
+        self.assertEqual(er.exception.detail['total'][0].code, 'invalid')
 
     def test_validate_total_is_dif_sum_items(self):
         test_data = self.serializer_data
@@ -334,7 +338,6 @@ class PurchaseWriteSerializerTest(TestCase):
         serializer = PurchaseWriteSerializer(data=test_data)
         with self.assertRaises(ValidationError) as er:
             serializer.is_valid(raise_exception=True)
-        print(er.exception.detail)
         self.assertEqual(er.exception.detail['total'][0].code, 'dif_sum')
 
     def test_validate_total_is_sum_items(self):
