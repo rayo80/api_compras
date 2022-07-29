@@ -89,8 +89,8 @@ class Item(models.Model):
     id = models.AutoField(primary_key=True)
     cantidad = models.IntegerField()
     incluye_igv = models.BooleanField(default=True, choices=INCLUDE_IGV, null=False)
-    total_item = models.DecimalField(max_digits=7, decimal_places=2, blank=False, null=True)
-    igv = models.DecimalField(max_digits=7, decimal_places=2, blank=False, null=True)
+    total_item = models.IntegerField(blank=False, null=True)  # /100 to representate
+    igv = models.IntegerField(blank=True, null=True)  # /100 to representate
     producto = models.ForeignKey(Product, on_delete=models.PROTECT, null=True, default=None)
     compra = models.ForeignKey(Purchase, on_delete=models.CASCADE, related_name='items')
     state = models.BooleanField('Estado', default=True)

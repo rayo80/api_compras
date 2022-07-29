@@ -20,15 +20,13 @@ class PurchaseFactory:
                 {
                     "producto": "1",
                     "cantidad": 17,
-                    "incluye_igv": True,
-                    "igv": 3.6,
+                    "igv": 4.88,
                     "total_item": 32
                 },
                 {
                     "producto": "2",
                     "cantidad": 18,
-                    "incluye_igv": True,
-                    "igv": 2.5,
+                    "igv": 5.19,
                     "total_item": 34
                 }
             ]

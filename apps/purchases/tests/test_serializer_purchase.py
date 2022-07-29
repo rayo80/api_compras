@@ -221,15 +221,13 @@ class PurchaseWriteSerializerTest(TestCase):
                 {
                     "producto": "1",
                     "cantidad": 19,
-                    "incluye_igv": True,
-                    "igv": 3.6,
+                    "igv": 4.88,
                     "total_item": 32
                 },
                 {
                     "producto": "2",
                     "cantidad": 18,
-                    "incluye_igv": True,
-                    "igv": 2.5,
+                    "igv": 5.19,
                     "total_item": 34
                 }
             ]
@@ -252,8 +250,7 @@ class PurchaseWriteSerializerTest(TestCase):
         self.item1_attributes = {
             "producto": product1,
             "cantidad": 17,
-            "incluye_igv": True,
-            "igv": 3.6,
+            "igv": 4.88,
             "total_item": 32,
             "compra": self.purchase_instance
         }
@@ -261,8 +258,7 @@ class PurchaseWriteSerializerTest(TestCase):
         self.item2_attributes = {
             "producto": product2,
             "cantidad": 18,
-            "incluye_igv": True,
-            "igv": 2.5,
+            "igv": 5.19,
             "total_item": 34,
             "compra": self.purchase_instance
         }
@@ -332,17 +328,22 @@ class PurchaseWriteSerializerTest(TestCase):
         test_data = self.serializer_data
         test_data['total'] = 43.54
         test_data['items'][0]['total_item'] = 21.30
+        test_data['items'][0]['igv'] = 3.25
         test_data['items'][1]['total_item'] = 22.25
+        test_data['items'][1]['igv'] = 3.39
         serializer = PurchaseWriteSerializer(data=test_data)
         with self.assertRaises(ValidationError) as er:
             serializer.is_valid(raise_exception=True)
+        print(er.exception.detail)
         self.assertEqual(er.exception.detail['total'][0].code, 'dif_sum')
 
     def test_validate_total_is_sum_items(self):
         test_data = self.serializer_data
-        test_data['total'] = 43.55
-        test_data['items'][0]['total_item'] = 21.30
+        test_data['total'] = 43.85
+        test_data['items'][0]['total_item'] = 21.60
+        test_data['items'][0]['igv'] = 3.29
         test_data['items'][1]['total_item'] = 22.25
+        test_data['items'][1]['igv'] = 3.39
         serializer = PurchaseWriteSerializer(data=test_data)
         self.assertEqual(serializer.is_valid(), True)
 

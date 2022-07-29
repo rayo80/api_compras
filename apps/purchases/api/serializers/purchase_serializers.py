@@ -37,6 +37,16 @@ class ItemPurchaseListSerializer(serializers.ListSerializer):
 
 
 class ItemPurchaseSerializer(serializers.ModelSerializer):
+    total_item = serializers.DecimalField(max_digits=6, decimal_places=2)
+    igv = serializers.DecimalField(max_digits=6, decimal_places=2)
+
+    def to_representation(self, instance):
+        return{
+            "id": instance.id,
+            "cantidad": instance.cantidad,
+            "igv": instance.igv/100 if instance is not None else instance.igv,
+            "total_item": instance.total_item/100,
+        }
 
     class Meta:
         model = Item
@@ -50,13 +60,17 @@ class ItemPurchaseSerializer(serializers.ModelSerializer):
                                               code='cant_zero')
         return value
 
+    def validate_total_item(self, value):
+        return int(value*100)
+
     # Lo mas importante en la compra es el total y la cantidad
     def validate(self, attrs):
         if attrs["igv"]:
-            igv_int = attrs["total_item"]*18/118*100
+            igv_int = attrs["total_item"]*18/118
             if int(attrs["igv"]*100) != round(igv_int):
                 raise serializers.ValidationError("El IGV no coincide",
                                                   code='dif_igv')
+            attrs['igv'] = attrs['igv']*100
         return attrs
 
     def delete(self, instance):
@@ -167,7 +181,7 @@ class PurchaseWriteSerializer(serializers.ModelSerializer):
 
         suma = 0
         for value in attrs['items']:
-            suma = suma + int(100*value.get('total_item'))
+            suma = suma + value.get('total_item')
 
         if suma != int(100*attrs['total']):
             raise serializers.ValidationError(
