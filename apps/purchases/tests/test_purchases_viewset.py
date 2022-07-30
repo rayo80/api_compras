@@ -39,7 +39,17 @@ class PurchaseTestCase(APITestCase):
         G(Supplier)
         G(Product)
         G(Product)
-        self.purchase = G(Purchase, id=1, num_documento='F001-789')
+        self.purchase = G(Purchase, id=1, num_documento='F001-789', total=3450)
+
+    def test_list_purchases_returns(self):
+        response = self.client.get('/purchases/purchase/')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data), 1)
+
+    def test_purchases1_returns(self):
+        response = self.client.get('/purchases/purchase/1/')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["total"], 34.50)
 
     def test_create_purchase(self):
         purchase_data = PurchaseFactory().build_purchase_json()

@@ -1,4 +1,3 @@
-from decimal import Decimal
 from rest_framework import serializers
 from apps.purchases.models import Purchase, Item, Supplier
 
@@ -40,14 +39,13 @@ class ItemPurchaseSerializer(serializers.ModelSerializer):
     total_item = serializers.DecimalField(max_digits=6, decimal_places=2)
     igv = serializers.DecimalField(max_digits=6, decimal_places=2)
 
+    # TODO: serializador para representar productos
+
     def to_representation(self, instance):
-        print(instance)
-        return{
-            "id": instance.id,
-            "cantidad": instance.cantidad,
-            "igv": instance.igv/100,
-            "total_item": instance.total_item/100,
-        }
+        representation = super().to_representation(instance)
+        representation["total_item"] = instance.total_item/100
+        representation["igv"] = instance.igv/100
+        return representation
 
     class Meta:
         model = Item
@@ -66,12 +64,13 @@ class ItemPurchaseSerializer(serializers.ModelSerializer):
 
     # Lo mas importante en la compra es el total y la cantidad
     def validate(self, attrs):
+        igv_int = round(attrs["total_item"] * 18 / 118)
         if attrs["igv"]:
-            igv_int = attrs["total_item"]*18/118
-            if int(attrs["igv"]*100) != round(igv_int):
+            if int(attrs["igv"]*100) != igv_int:
                 raise serializers.ValidationError("El IGV no coincide",
                                                   code='dif_igv')
             attrs['igv'] = attrs['igv']*100
+        attrs['igv'] = igv_int
         return attrs
 
     def delete(self, instance):
@@ -87,6 +86,11 @@ class SupplierPurchaseSerializer(serializers.ModelSerializer):
 
 class PurchaseListSerializer(serializers.ModelSerializer):
     proveedor = SupplierPurchaseSerializer()
+    total = serializers.FloatField()
+
+    def to_representation(self, instance):
+        instance.total = instance.total/100
+        return super(PurchaseListSerializer, self).to_representation(instance)
 
     class Meta:
         model = Purchase
@@ -101,16 +105,10 @@ class PurchaseReadSerializer(serializers.ModelSerializer):
     proveedor = SupplierPurchaseSerializer()
     items = ItemPurchaseSerializer(many=True)
 
-    """
-    items = serializers.SerializerMethodField()
-        def get_items(self, instance):
-        qs = Item.objects.filter(compra__id=instance.id)
-        data = ItemPurchaseSerializer(qs, many=True).data
-        return data
-    """
     def to_representation(self, instance):
-        instance.total = instance.total/100
-        return super().to_representation(instance)
+        representation = super().to_representation(instance)
+        representation["total"] = instance.total/100
+        return representation
 
     class Meta:
         model = Purchase

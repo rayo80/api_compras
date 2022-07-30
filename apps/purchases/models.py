@@ -66,7 +66,7 @@ class Purchase(BaseModel):
     moneda = models.CharField('moneda', max_length=20, choices=MONEDA, default='PEN')
     observacion = models.TextField(null=True, default=None, blank=True)
     # total = models.CharField('total', max_length=10, default="0.00", blank=False, null=False)
-    total = models.IntegerField('total', max_length=10, default=0, blank=False, null=False)
+    total = models.IntegerField('total', max_length=10, default=0, blank=False, null=False)  # /100
 
     class Meta:
         """Meta definition for Purchase."""
