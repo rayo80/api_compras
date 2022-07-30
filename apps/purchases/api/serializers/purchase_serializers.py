@@ -63,15 +63,8 @@ class ItemPurchaseSerializer(serializers.ModelSerializer):
         return int(value*100)
 
     # Lo mas importante en la compra es el total y la cantidad
-    def validate(self, attrs):
-        igv_int = round(attrs["total_item"] * 18 / 118)
-        if attrs["igv"]:
-            if int(attrs["igv"]*100) != igv_int:
-                raise serializers.ValidationError("El IGV no coincide",
-                                                  code='dif_igv')
-            attrs['igv'] = attrs['igv']*100
-        attrs['igv'] = igv_int
-        return attrs
+    def validate_igv(self, value):
+        return int(value*10)
 
     def delete(self, instance):
         pass
