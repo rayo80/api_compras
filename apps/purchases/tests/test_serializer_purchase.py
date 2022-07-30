@@ -75,27 +75,6 @@ class ItemPurchaseSerializerTest(TestCase):
             serializer.is_valid(raise_exception=True)
         self.assertEqual(er.exception.detail['cantidad'][0].code, 'cant_zero')
 
-    # Valor exacto de IGV
-    def test_igv_amount_is_correct(self):
-        test_data = self.serializer_data
-        test_data['igv'] = 5.80
-        test_data['total_item'] = 38.00
-        serializer = ItemPurchaseSerializer(data=test_data)
-        self.assertEqual(serializer.is_valid(), True)
-
-    """
-        def test_igv_is_correctly_save(self):
-        test_data = self.serializer_data
-        test_data['igv'] = 5.80
-        test_data['total_item'] = 38.00
-        serializer = ItemPurchaseSerializer(data=test_data)
-        with self.assertRaises(ValidationError) as er:
-            serializer.is_valid(raise_exception=True)
-        self.assertEqual(er.exception.detail['igv'][0].code,
-                         'dif_igv')
-
-    """
-
     def test_create_incrementa_stock(self):
         actual_stock = self.product1.stock
         # solo un valor de la lista de creación

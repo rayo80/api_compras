@@ -80,9 +80,11 @@ class SupplierPurchaseSerializer(serializers.ModelSerializer):
 class PurchaseListSerializer(serializers.ModelSerializer):
     proveedor = SupplierPurchaseSerializer()
     total = serializers.FloatField()
+    igv = serializers.FloatField()
 
     def to_representation(self, instance):
         instance.total = instance.total/100
+        instance.igv = instance.total / 100
         return super(PurchaseListSerializer, self).to_representation(instance)
 
     class Meta:
@@ -95,19 +97,21 @@ class PurchaseListSerializer(serializers.ModelSerializer):
 
 class PurchaseReadSerializer(serializers.ModelSerializer):
     total = serializers.DecimalField(max_digits=6, decimal_places=2)
+    igv = serializers.DecimalField(max_digits=6, decimal_places=2)
     proveedor = SupplierPurchaseSerializer()
     items = ItemPurchaseSerializer(many=True)
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         representation["total"] = instance.total/100
+        representation["igv"] = instance.igv / 100
         return representation
 
     class Meta:
         model = Purchase
         fields = ('id', 'proveedor', 'tipo_documento',
                   'num_documento', 'fecha_documento',
-                  'serie', 'correlativo', 'total',
+                  'serie', 'correlativo', 'total', 'igv',
                   'fecha_vencimiento', 'moneda', 'items')
 
     def update(self, instance, validated_data):
@@ -121,13 +125,14 @@ class PurchaseWriteSerializer(serializers.ModelSerializer):
 
     # como es una lista many=True
     total = serializers.DecimalField(max_digits=6, decimal_places=2)
+    igv = serializers.DecimalField(max_digits=6, decimal_places=2)
     items = ItemPurchaseSerializer(many=True)
 
     class Meta:
         model = Purchase
         fields = ('proveedor', 'tipo_documento', 'num_documento',
                   'fecha_documento', 'fecha_vencimiento', 'moneda',
-                  'total', 'items')
+                  'total', 'igv', 'items')
 
     def validate_items(self, value):
         if len(value) == 0:
