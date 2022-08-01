@@ -177,6 +177,7 @@ class ItemPurchaseSerializerTest(TestCase):
         self.assertEqual(-lista_items[1].cantidad, self.product2.stock-actual_stock2)  # -10
         self.assertEqual(self.product4.stock, 32)  # 80-48
 
+    #TODO: TESTEAR CANTIDAD ES POSITIVAL
 
 class PurchaseWriteSerializerTest(TestCase):
 
@@ -281,17 +282,6 @@ class PurchaseWriteSerializerTest(TestCase):
         self.assertEqual(serializer.errors['items'][0].code,
                          'not_same_product')
 
-    # validate_total
-    """
-    Antes ingresaba como string
-    def test_validate_total_not_string(self):
-        test_data = self.serializer_data
-        test_data['total'] = 'sadasd'
-        serializer = PurchaseWriteSerializer(data=test_data)
-        serializer.is_valid()
-        self.assertEqual(serializer.errors['total'][0].code, 2)
-    """
-
     def test_validate_total_is_not_none(self):
         test_data = self.serializer_data
         test_data['total'] = None
@@ -323,6 +313,15 @@ class PurchaseWriteSerializerTest(TestCase):
         test_data = self.serializer_data
         test_data['total'] = 43.85
         test_data['items'][0]['total_item'] = 21.60
+        test_data['items'][1]['total_item'] = 22.25
+        serializer = PurchaseWriteSerializer(data=test_data)
+        self.assertEqual(serializer.is_valid(), True)
+
+    # validate IGV
+    def test_validate_igv_purchase(self):
+        test_data = self.serializer_data
+        test_data['total'] = 43.85
+        test_data['items'][0]['total_item'] = 21.60
         test_data['items'][0]['igv'] = 3.29
         test_data['items'][1]['total_item'] = 22.25
         test_data['items'][1]['igv'] = 3.39
@@ -344,7 +343,7 @@ class PurchaseWriteSerializerTest(TestCase):
         serializer.is_valid()
         self.assertEqual(serializer.errors['num_documento'][0].code, 'guion')
 
-    def test_validate_num_documento_fields_correct_format(self):
+    def test_validate_serie_correct_format(self):
         test_data = self.serializer_data
         test_data['num_documento'] = 'asd-asd'
         serializer = PurchaseWriteSerializer(data=test_data)
@@ -360,6 +359,9 @@ class PurchaseWriteSerializerTest(TestCase):
             serializer.is_valid(raise_exception=True)
         self.assertEqual(er.exception.detail['num_documento'][0].code, 'BorForE')
         """
+
+    def test_validate_correlativo_correct_format(self):
+        test_data = self.serializer_data
         test_data['num_documento'] = 'F256-asd'
         serializer = PurchaseWriteSerializer(data=test_data)
         with self.assertRaises(ValidationError) as er:

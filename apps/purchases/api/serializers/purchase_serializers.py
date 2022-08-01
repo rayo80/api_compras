@@ -83,7 +83,7 @@ class PurchaseListSerializer(serializers.ModelSerializer):
     igv = serializers.FloatField()
 
     def to_representation(self, instance):
-        instance.total = instance.total/100
+        instance.total = instance.total / 100
         instance.igv = instance.total / 100
         return super(PurchaseListSerializer, self).to_representation(instance)
 
@@ -144,13 +144,9 @@ class PurchaseWriteSerializer(serializers.ModelSerializer):
         return value
 
     def validate_total(self, value):
-        """
-        if any(char.isalpha() for char in value):
-            raise serializers.ValidationError("El valor contiene caracteres no numericos", code=2)
+        return int(value*100)
 
-            value = round(Decimal(value), 2)
-        """
-
+    def validate_igv(self, value):
         return int(value*100)
 
     def validate_num_documento(self, value):
@@ -164,7 +160,7 @@ class PurchaseWriteSerializer(serializers.ModelSerializer):
 
         """
         if serie[0] != 'F' and serie[0] != 'B' and serie[0] != 'E':
-            raise serializers.ValidationError("El valor de la serie no comienza con B o F", code='BorForE')
+            raise serializers.ValidationError("El valor de la serie no comienza con B , F o E", code='BorForE')
         """
 
         if any(char.isalpha() for char in correlativo):
