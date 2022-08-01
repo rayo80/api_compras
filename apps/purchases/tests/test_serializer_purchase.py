@@ -177,7 +177,7 @@ class ItemPurchaseSerializerTest(TestCase):
         self.assertEqual(-lista_items[1].cantidad, self.product2.stock-actual_stock2)  # -10
         self.assertEqual(self.product4.stock, 32)  # 80-48
 
-    #TODO: TESTEAR CANTIDAD ES POSITIVAL
+    # TODO: TESTEAR CANTIDAD ES POSITIVAL
 
 class PurchaseWriteSerializerTest(TestCase):
 
@@ -301,9 +301,7 @@ class PurchaseWriteSerializerTest(TestCase):
         test_data = self.serializer_data
         test_data['total'] = 43.54
         test_data['items'][0]['total_item'] = 21.30
-        test_data['items'][0]['igv'] = 3.25
         test_data['items'][1]['total_item'] = 22.25
-        test_data['items'][1]['igv'] = 3.39
         serializer = PurchaseWriteSerializer(data=test_data)
         with self.assertRaises(ValidationError) as er:
             serializer.is_valid(raise_exception=True)
@@ -317,16 +315,15 @@ class PurchaseWriteSerializerTest(TestCase):
         serializer = PurchaseWriteSerializer(data=test_data)
         self.assertEqual(serializer.is_valid(), True)
 
-    # validate IGV
+    # validate igv
     def test_validate_igv_purchase(self):
         test_data = self.serializer_data
         test_data['total'] = 43.85
-        test_data['items'][0]['total_item'] = 21.60
-        test_data['items'][0]['igv'] = 3.29
-        test_data['items'][1]['total_item'] = 22.25
-        test_data['items'][1]['igv'] = 3.39
+        test_data['igv'] = 21.60
         serializer = PurchaseWriteSerializer(data=test_data)
-        self.assertEqual(serializer.is_valid(), True)
+        with self.assertRaises(ValidationError) as er:
+            serializer.is_valid(raise_exception=True)
+        self.assertEqual(er.exception.detail['igv'][0].code, 'dif_igv')
 
     # num_documento
     def test_validate_num_documento_is_not_blank(self):

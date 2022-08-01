@@ -191,6 +191,12 @@ class PurchaseWriteSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 {"fecha_vencimiento": "La fecha de vencimiento es menor que la fecha de documento"},
                 code='fven<fdoc')
+
+        igv_int = round(attrs["total_item"] * 18 / 118)
+        if attrs["igv"] != igv_int:
+            raise serializers.ValidationError({"igv": "El IGV no coincide"},
+                                              code='dif_igv')
+
         return attrs
 
     def create(self, validated_data):
