@@ -152,10 +152,8 @@ class PurchaseWriteSerializer(serializers.ModelSerializer):
         if len(serie) != 4:
             raise serializers.ValidationError("El valor de serie no tiene 4 caracteres", code='serie4')
 
-        """
         if serie[0] != 'F' and serie[0] != 'B' and serie[0] != 'E':
             raise serializers.ValidationError("El valor de la serie no comienza con B , F o E", code='BorForE')
-        """
 
         if any(char.isalpha() for char in correlativo):
             raise serializers.ValidationError("El valor de correlativo no tiene numeros", code='corr_non_num')

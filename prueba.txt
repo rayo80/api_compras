@@ -1,0 +1,24 @@
+  #json prueba purchase
+
+  {
+        "proveedor": "1",
+        "tipo_documento": "1",
+        "num_documento": "F001-000056",
+        "fecha_documento": "2022-04-01",
+        "fecha_vencimiento": "2022-04-01",
+        "moneda": "PEN",
+        "igv":10.11,
+        "total":66.3
+        "items": [
+            {
+               "producto":"1",
+               "cantidad":17,
+               "total_item":32
+            },
+            {
+               "producto":"2",
+               "cantidad":18,
+               "total_item":34.3
+            }
+        ]
+    }

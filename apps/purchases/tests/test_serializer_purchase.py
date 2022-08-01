@@ -349,14 +349,14 @@ class PurchaseWriteSerializerTest(TestCase):
             serializer.is_valid(raise_exception=True)
         self.assertEqual(er.exception.detail['num_documento'][0].code, 'serie4')
 
-        """
+    def test_validate_num_document_correct_initial_lettter(self):
         # Caso para mas adelante
-        test_data['num_documento'] = '2d56-asd'
+        test_data = self.serializer_data
+        test_data['num_documento'] = 'D001-a0003'
         serializer = PurchaseWriteSerializer(data=test_data)
         with self.assertRaises(ValidationError) as er:
             serializer.is_valid(raise_exception=True)
         self.assertEqual(er.exception.detail['num_documento'][0].code, 'BorForE')
-        """
 
     def test_validate_correlativo_correct_format(self):
         test_data = self.serializer_data
@@ -477,15 +477,4 @@ class PurchaseWriteSerializerTest(TestCase):
         self.assertFalse(purchase.state)
         self.assertEqual(purchase.items.count(), 0)
 
-    """
-    def test_update_serializer(self):
-        test_data = self.serializer_data
-        serializer = PurchaseWriteSerializer(instance, data=test_data)
-        serializer.is_valid(raise_exception=True)
-        instance = serializer.save()
 
-        self.assertEqual(str(instance), 'Compra 1 F001-00004')
-        self.assertEqual(instance.id, 1)
-        self.assertEqual(instance.items.count(), 2)
-    #  test create generate item
-    """
