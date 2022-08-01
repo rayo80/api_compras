@@ -25,7 +25,6 @@ class ItemPurchaseSerializerTest(TestCase):
         self.item_atributtes = {
             "producto": self.product1,
             "cantidad": 29,
-            "igv": 5.03,
             "total_item": 33,
             "compra": self.purchase
         }
@@ -179,6 +178,7 @@ class ItemPurchaseSerializerTest(TestCase):
 
     # TODO: TESTEAR CANTIDAD ES POSITIVAL
 
+
 class PurchaseWriteSerializerTest(TestCase):
 
     def setUp(self):
@@ -197,6 +197,7 @@ class PurchaseWriteSerializerTest(TestCase):
             "fecha_vencimiento": "2022-04-01",
             "moneda": "PEN",
             "total": 66,
+            "igv": 10.07,
             "items": [
                 {
                     "producto": "1",
@@ -222,7 +223,8 @@ class PurchaseWriteSerializerTest(TestCase):
             "fecha_documento": "2022-04-01",
             "fecha_vencimiento": "2022-04-01",
             "moneda": "PEN",
-            "total": 66,
+            "total": 65,
+            "igv": 9.91,
         }
 
         self.purchase_instance = Purchase.objects.create(**self.purchase_attributes)
@@ -230,7 +232,6 @@ class PurchaseWriteSerializerTest(TestCase):
         self.item1_attributes = {
             "producto": product1,
             "cantidad": 17,
-            "igv": 4.88,
             "total_item": 32,
             "compra": self.purchase_instance
         }
@@ -238,7 +239,6 @@ class PurchaseWriteSerializerTest(TestCase):
         self.item2_attributes = {
             "producto": product2,
             "cantidad": 18,
-            "igv": 5.19,
             "total_item": 34,
             "compra": self.purchase_instance
         }
@@ -268,7 +268,6 @@ class PurchaseWriteSerializerTest(TestCase):
                          'does_not_exist')
 
     # validate_Items
-
     def test_validate_items_not_none(self):
         self.serializer_data['items'] = []
         serializer = PurchaseWriteSerializer(data=self.serializer_data)
@@ -282,6 +281,17 @@ class PurchaseWriteSerializerTest(TestCase):
         self.assertEqual(serializer.errors['items'][0].code,
                          'not_same_product')
 
+    # validate igv
+    def test_validate_igv_purchase(self):
+        test_data = self.serializer_data
+        test_data['igv'] = 21.60
+        serializer = PurchaseWriteSerializer(data=test_data)
+        with self.assertRaises(ValidationError) as er:
+            serializer.is_valid(raise_exception=True)
+        print(er.exception.detail)
+        self.assertEqual(er.exception.detail['igv'][0].code, 'dif_igv')
+
+    # validate total
     def test_validate_total_is_not_none(self):
         test_data = self.serializer_data
         test_data['total'] = None
@@ -310,20 +320,11 @@ class PurchaseWriteSerializerTest(TestCase):
     def test_validate_total_is_sum_items(self):
         test_data = self.serializer_data
         test_data['total'] = 43.85
+        test_data['igv'] = 6.69
         test_data['items'][0]['total_item'] = 21.60
         test_data['items'][1]['total_item'] = 22.25
         serializer = PurchaseWriteSerializer(data=test_data)
         self.assertEqual(serializer.is_valid(), True)
-
-    # validate igv
-    def test_validate_igv_purchase(self):
-        test_data = self.serializer_data
-        test_data['total'] = 43.85
-        test_data['igv'] = 21.60
-        serializer = PurchaseWriteSerializer(data=test_data)
-        with self.assertRaises(ValidationError) as er:
-            serializer.is_valid(raise_exception=True)
-        self.assertEqual(er.exception.detail['igv'][0].code, 'dif_igv')
 
     # num_documento
     def test_validate_num_documento_is_not_blank(self):
@@ -427,8 +428,9 @@ class PurchaseWriteSerializerTest(TestCase):
 
     def test_create_single_items_serializer(self):
         test_data = self.serializer_data
+        total = test_data["total"]
         test_data["items"] = [test_data["items"][0]]
-        test_data["total"] = test_data["items"][0]["total_item"]
+        test_data["items"][0]["total_item"] = total
         serializer = PurchaseWriteSerializer(data=test_data)
         serializer.is_valid(raise_exception=True)
         instance = serializer.save()

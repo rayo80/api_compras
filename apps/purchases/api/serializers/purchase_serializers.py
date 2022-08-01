@@ -37,19 +37,17 @@ class ItemPurchaseListSerializer(serializers.ListSerializer):
 
 class ItemPurchaseSerializer(serializers.ModelSerializer):
     total_item = serializers.DecimalField(max_digits=6, decimal_places=2)
-    igv = serializers.DecimalField(max_digits=6, decimal_places=2)
 
     # TODO: serializador para representar productos
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         representation["total_item"] = instance.total_item/100
-        representation["igv"] = instance.igv/100
         return representation
 
     class Meta:
         model = Item
-        fields = ('id', 'producto', 'cantidad', 'igv',
+        fields = ('id', 'producto', 'cantidad',
                   'total_item')
         list_serializer_class = ItemPurchaseListSerializer
 
@@ -61,10 +59,6 @@ class ItemPurchaseSerializer(serializers.ModelSerializer):
 
     def validate_total_item(self, value):
         return int(value*100)
-
-    # Lo mas importante en la compra es el total y la cantidad
-    def validate_igv(self, value):
-        return int(value*10)
 
     def delete(self, instance):
         pass
@@ -91,7 +85,7 @@ class PurchaseListSerializer(serializers.ModelSerializer):
         model = Purchase
         fields = ('id', 'proveedor', 'tipo_documento',
                   'num_documento', 'fecha_documento',
-                  'serie', 'correlativo', 'total',
+                  'serie', 'correlativo', 'total', 'igv',
                   'fecha_vencimiento', 'moneda')
 
 
@@ -103,7 +97,7 @@ class PurchaseReadSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        representation["total"] = instance.total/100
+        representation["total"] = instance.total / 100
         representation["igv"] = instance.igv / 100
         return representation
 
@@ -192,10 +186,11 @@ class PurchaseWriteSerializer(serializers.ModelSerializer):
                 {"fecha_vencimiento": "La fecha de vencimiento es menor que la fecha de documento"},
                 code='fven<fdoc')
 
-        igv_int = round(attrs["total_item"] * 18 / 118)
+        igv_int = round(attrs["total"] * 18 / 118)
         if attrs["igv"] != igv_int:
-            raise serializers.ValidationError({"igv": "El IGV no coincide"},
-                                              code='dif_igv')
+            raise serializers.ValidationError(
+                {"igv": "El IGV no coincide"},
+                code='dif_igv')
 
         return attrs
 

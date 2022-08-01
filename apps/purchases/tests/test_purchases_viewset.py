@@ -15,19 +15,18 @@ class PurchaseFactory:
             "fecha_documento": "2022-04-01",
             "fecha_vencimiento": "2022-04-01",
             "moneda": "PEN",
-            "total": 66,
+            "total": 66.85,
+            "igv": 10.20,
             "items": [
                 {
                     "producto": "1",
                     "cantidad": 17,
-                    "igv": 4.88,
-                    "total_item": 32
+                    "total_item": 32.13
                 },
                 {
                     "producto": "2",
                     "cantidad": 18,
-                    "igv": 5.19,
-                    "total_item": 34
+                    "total_item": 34.72
                 }
             ]
         }
