@@ -55,6 +55,7 @@ class PurchaseTestCase(APITestCase):
         response = self.client.post('/purchases/purchase/',
                                     purchase_data,
                                     format='json')
+        print(response.data)
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data['items'][0]['cantidad'], 17)
 

@@ -109,23 +109,18 @@ class Item(models.Model):
     # LOGIC BUSSINES #
     def increment_stock(self, *args, **kwargs):
         # este refresh actualiza el valor actual del stock
-        print(self.producto.stock)
         self.producto.stock += self.cantidad
         self.producto.save()
-        print('Incrementing stock')
-        print(self.producto.stock)
         return self.producto.stock
 
     def decrement_stock(self, *args, **kwargs):
-        print(self.producto.stock)
         self.producto.stock -= self.cantidad
         self.producto.save()
-        print('Decrementing stock')
-        print(self.producto.stock)
         return self.producto.stock
 
-    """
 
+    """
+    
     # Opcion por signals
     def aument_product(sender, instance, **kwargs):
         item = instance.id

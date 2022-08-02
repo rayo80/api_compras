@@ -54,7 +54,7 @@ class PurchaseViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         serializer = PurchaseWriteSerializer()
         serializer.destroy(instance)
-        return Response({"message": "Eliminado"},
+        return Response({"message": "Compra eliminada se reducira stock"},
                         status=status.HTTP_204_NO_CONTENT)
 
     """

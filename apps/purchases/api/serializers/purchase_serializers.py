@@ -5,44 +5,47 @@ from apps.purchases.models import Purchase, Item, Supplier
 class ItemPurchaseListSerializer(serializers.ListSerializer):
 
     def create(self, validated_data):
-        # validated_data es una lista
+        # validated_data es una lista de json
         instance_items = super().create(validated_data)
         # una vez se crea la instancia que se realice el incrememento
         for item in instance_items:
             item.increment_stock()
         return instance_items
 
-    def update(self, instance, validated_data):
-        # una vez entramos aca decrementamos lo que agregaron los items
-        # y lo eliminamos
-        for item in instance:
-            item.decrement_stock()
-            # item.producto.save()
-            item.delete()
-        # creamos los nuevos items
-        instance_items = super().create(validated_data)
-        # una vez se crea la instancia que se realice el incremento
-        for item in instance_items:
-            item.increment_stock()
-            # item.producto.save()
-        return instance_items
-
     def delete(self, instance):
+        # instance es una lista de instancias del item
         for item in instance:
             item.decrement_stock()
             # realizamos un cambio al stock hay que guardarlo
             item.delete()
         return instance
 
+    def update(self, instance, validated_data):
+        # una vez entramos aca decrementamos lo que agregaron los items
+        # anteriores, instance es la lista de items dentro de la compra
+
+        instance = self.delete(instance)
+
+        # creamos los nuevos items y si detectamos que comparten ID
+        # chancamos el stock que quedo al nuevo item
+        for item_instances in instance:
+            for item_data in validated_data:
+                if item_instances.producto.id == item_data["producto"].id:
+                    item_data["producto"].stock = item_instances.producto.stock
+
+        new_items = self.create(validated_data)
+
+        return new_items
+
 
 class ItemPurchaseSerializer(serializers.ModelSerializer):
-    total_item = serializers.DecimalField(max_digits=6, decimal_places=2)
+    total_item = serializers.DecimalField(max_digits=10, decimal_places=2)
 
     # TODO: serializador para representar productos
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        representation["total_item"] = instance.total_item/100
+        representation["total_item"] = instance.total_item / 100
         return representation
 
     class Meta:
@@ -78,7 +81,7 @@ class PurchaseListSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         instance.total = instance.total / 100
-        instance.igv = instance.total / 100
+        instance.igv = instance.igv / 100
         return super(PurchaseListSerializer, self).to_representation(instance)
 
     class Meta:
@@ -90,8 +93,8 @@ class PurchaseListSerializer(serializers.ModelSerializer):
 
 
 class PurchaseReadSerializer(serializers.ModelSerializer):
-    total = serializers.DecimalField(max_digits=6, decimal_places=2)
-    igv = serializers.DecimalField(max_digits=6, decimal_places=2)
+    total = serializers.DecimalField(max_digits=10, decimal_places=2)
+    igv = serializers.DecimalField(max_digits=10, decimal_places=2)
     proveedor = SupplierPurchaseSerializer()
     items = ItemPurchaseSerializer(many=True)
 
@@ -118,8 +121,8 @@ class PurchaseReadSerializer(serializers.ModelSerializer):
 class PurchaseWriteSerializer(serializers.ModelSerializer):
 
     # como es una lista many=True
-    total = serializers.DecimalField(max_digits=6, decimal_places=2)
-    igv = serializers.DecimalField(max_digits=6, decimal_places=2)
+    total = serializers.DecimalField(max_digits=8, decimal_places=2)
+    igv = serializers.DecimalField(max_digits=8, decimal_places=2)
     items = ItemPurchaseSerializer(many=True)
 
     class Meta:
@@ -177,7 +180,8 @@ class PurchaseWriteSerializer(serializers.ModelSerializer):
 
         if suma != int(attrs['total']):
             raise serializers.ValidationError(
-                {"total": "La sumatoria de precio items no coincide"}, code='dif_sum')
+                {"total": "La sumatoria de precio items no coincide"},
+                code='dif_sum')
 
         if attrs['fecha_documento'] > attrs['fecha_vencimiento']:
             raise serializers.ValidationError(
@@ -205,7 +209,7 @@ class PurchaseWriteSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         items_data = validated_data.pop('items')
-        # actual_items = Item.objects.filter(compra__id=instance.id)
+        # trae todos los items de la compra
         actual_items = instance.items.all()
         instance = super().update(instance, validated_data)
 

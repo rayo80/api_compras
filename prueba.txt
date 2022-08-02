@@ -7,18 +7,18 @@
         "fecha_documento": "2022-04-01",
         "fecha_vencimiento": "2022-04-01",
         "moneda": "PEN",
-        "igv":10.11,
-        "total":66.3
+        "igv":100.72,
+        "total":660.3,
         "items": [
             {
-               "producto":"1",
+               "producto":"7",
                "cantidad":17,
-               "total_item":32
+               "total_item":320
             },
             {
                "producto":"2",
                "cantidad":18,
-               "total_item":34.3
+               "total_item":340.3
             }
         ]
     }
