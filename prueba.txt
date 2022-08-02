@@ -22,3 +22,15 @@
             }
         ]
     }
+
+    #prueba proveedor
+    {
+        "tipo_documento": "6",
+        "num_documento": "30000000012",
+        "legal_name": "TIENDITA PETIT IMPORTACIONES",
+        "address": "436 Douglas Manor, Suite 200, 68135, Tillmanview, Pennsylvania, United States",
+        "phone": "",
+        "email": "errrrrtiendita@gmail.com",
+        "cod_proveedor": "",
+        "type_person": null
+    }
