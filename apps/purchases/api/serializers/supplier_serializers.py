@@ -17,7 +17,7 @@ class SupplierSerializer(serializers.ModelSerializer):
 
     def validate(self, attribs):
         documento = attribs.get('tipo_documento')
-        if (documento == "6" or "1") and attribs['num_documento'].isnumeric() is False:
+        if (documento == "6" or "1") and attribs['num_documento'].isdigit() is False:
             raise serializers.ValidationError(
                 {"num_documento": "El valor contiene caracteres no numericos"},
                 code='no_num')

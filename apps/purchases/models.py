@@ -83,18 +83,11 @@ class Purchase(BaseModel):
 class Item(models.Model):
     """Model definition for Item."""
 
-    INCLUDE_IGV = (
-        (True, 'Incluye'),
-        (False, 'No incluye'),
-    )
-
     id = models.AutoField(primary_key=True)
     cantidad = models.IntegerField()
-    # incluye_igv = models.BooleanField(default=True, choices=INCLUDE_IGV, null=False)
     total_item = models.IntegerField(blank=False, null=True)  # /100 to representate
     producto = models.ForeignKey(Product, on_delete=models.PROTECT, null=True, default=None)
     compra = models.ForeignKey(Purchase, on_delete=models.CASCADE, related_name='items')
-    state = models.BooleanField('Estado', default=True)
 
     class Meta:
         """Meta definition for Item."""

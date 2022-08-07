@@ -61,7 +61,7 @@ class ItemPurchaseSerializer(serializers.ModelSerializer):
         return value
 
     def validate_total_item(self, value):
-        return int(value*100)
+        return round(value*100)
 
     def delete(self, instance):
         pass
@@ -155,10 +155,10 @@ class PurchaseWriteSerializer(serializers.ModelSerializer):
         if len(serie) != 4:
             raise serializers.ValidationError("El valor de serie no tiene 4 caracteres", code='serie4')
 
-        if serie[0] != 'F' and serie[0] != 'B' and serie[0] != 'E':
+        if serie[0] not in "FBE":
             raise serializers.ValidationError("El valor de la serie no comienza con B , F o E", code='BorForE')
 
-        if any(char.isalpha() for char in correlativo):
+        if not correlativo.isdigit():
             raise serializers.ValidationError("El valor de correlativo no tiene numeros", code='corr_non_num')
         return value
 
