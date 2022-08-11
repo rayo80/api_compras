@@ -2,10 +2,10 @@ from django.db import models
 
 from simple_history.models import HistoricalRecords
 
+
 # Create your models here.
 class BaseModel(models.Model):
     """Model definition for BaseModel."""
-
     id = models.AutoField(primary_key=True)
     state = models.BooleanField('Estado', default=True)
     created_date = models.DateField('Fecha de creacion', auto_now=False, auto_now_add=True)

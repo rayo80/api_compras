@@ -9,6 +9,7 @@ django-simple-history = "==3.0.0"
 djangorestframework = "==3.13.1"
 pillow = "9.0.1"
 django-dynamic-fixture = "*"
+coverage = "*"
 
 [dev-packages]
 flake8 = "*"

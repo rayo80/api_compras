@@ -15,9 +15,6 @@ class SupplierFactory:
             "email": "elenasheremetev@skillion.org",
         }
 
-    def create_supplier(self):
-        return Supplier.objects.create(**self.build_supplier_json())
-
 
 class SupplierTestCase(APITestCase):
 
