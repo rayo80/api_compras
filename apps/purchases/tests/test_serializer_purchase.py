@@ -350,16 +350,27 @@ class PurchaseWriteSerializerTest(TestCase):
         serializer.is_valid()
         self.assertEqual(serializer.errors['num_documento'][0].code, 'blank')
 
+    def test_not_validate_interno(self):
+        test_data = self.serializer_data
+        test_data['num_documento'] = '4559'
+        test_data['tipo_documento'] = '0'
+        serializer = PurchaseWriteSerializer(data=test_data)
+        serializer.is_valid()
+        self.assertTrue(serializer.is_valid())
+
     def test_validate_num_documento_correct_format(self):
         test_data = self.serializer_data
         test_data['num_documento'] = 'FVR'
+        test_data['tipo_documento'] = '1'
         serializer = PurchaseWriteSerializer(data=test_data)
-        serializer.is_valid()
-        self.assertEqual(serializer.errors['num_documento'][0].code, 'guion')
+        with self.assertRaises(ValidationError) as er:
+            serializer.is_valid(raise_exception=True)
+        self.assertEqual(er.exception.detail['num_documento'][0].code, 'guion')
 
     def test_validate_serie_correct_format(self):
         test_data = self.serializer_data
         test_data['num_documento'] = 'asd-asd'
+        test_data['tipo_documento'] = '1'
         serializer = PurchaseWriteSerializer(data=test_data)
         with self.assertRaises(ValidationError) as er:
             serializer.is_valid(raise_exception=True)
@@ -369,19 +380,24 @@ class PurchaseWriteSerializerTest(TestCase):
         # Caso para mas adelante
         test_data = self.serializer_data
         test_data['num_documento'] = 'D001-a0003'
+        test_data['tipo_documento'] = '1'
         serializer = PurchaseWriteSerializer(data=test_data)
         with self.assertRaises(ValidationError) as er:
             serializer.is_valid(raise_exception=True)
         self.assertEqual(er.exception.detail['num_documento'][0].code, 'BorForE')
 
     def test_validate_correlativo_correct_format(self):
+        """Validamos que sea numeral cuando sea factura"""
         test_data = self.serializer_data
         test_data['num_documento'] = 'F256-asd'
+        test_data['tipo_documento'] = '1'
         serializer = PurchaseWriteSerializer(data=test_data)
         with self.assertRaises(ValidationError) as er:
             serializer.is_valid(raise_exception=True)
         self.assertEqual(er.exception.detail['num_documento'][0].code,
                          'corr_non_num')
+        # {'non_field_errors': [ErrorDetail(string='El valor de correlativo no tiene numeros', code='corr_non_num')]}
+        # {'num_documento': [ErrorDetail(string='El valor de correlativo no tiene numeros', code='corr_non_num')]}
 
     # fecha documento
     def test_validate_fecha_documento_is_invalid(self):
@@ -402,7 +418,7 @@ class PurchaseWriteSerializerTest(TestCase):
         self.assertEqual(er.exception.detail['fecha_documento'][0].code,
                          'null')
 
-    # fecha vencimiento
+    # FECHA VENCIMIENTO
     def test_validate_fecha_vencimiento_is_invalid(self):
         test_data = self.serializer_data
         test_data['fecha_vencimiento'] = ''

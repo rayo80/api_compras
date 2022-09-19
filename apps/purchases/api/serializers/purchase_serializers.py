@@ -63,9 +63,6 @@ class ItemPurchaseSerializer(serializers.ModelSerializer):
     def validate_total_item(self, value):
         return round(value*100)
 
-    def delete(self, instance):
-        pass
-
 
 class SupplierPurchaseSerializer(serializers.ModelSerializer):
 
@@ -111,12 +108,6 @@ class PurchaseReadSerializer(serializers.ModelSerializer):
                   'serie', 'correlativo', 'total', 'igv',
                   'fecha_vencimiento', 'moneda', 'items')
 
-    def update(self, instance, validated_data):
-        pass
-
-    def create(self, validated_data):
-        pass
-
 
 class PurchaseWriteSerializer(serializers.ModelSerializer):
 
@@ -147,10 +138,8 @@ class PurchaseWriteSerializer(serializers.ModelSerializer):
         return int(value*100)
 
     def validate_num_documento(self, value):
-        if not ("-" in value):
-            raise serializers.ValidationError("El número de documento debe tener un guion", code='guion')
-
-        serie, correlativo = value.split("-")
+        """
+                serie, correlativo = value.split("-")
 
         if len(serie) != 4:
             raise serializers.ValidationError("El valor de serie no tiene 4 caracteres", code='serie4')
@@ -160,6 +149,8 @@ class PurchaseWriteSerializer(serializers.ModelSerializer):
 
         if not correlativo.isdigit():
             raise serializers.ValidationError("El valor de correlativo no tiene numeros", code='corr_non_num')
+        """
+
         return value
 
     def validate_fecha_vencimiento(self, value):
@@ -170,9 +161,6 @@ class PurchaseWriteSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         """Esto genera serie y correlativo"""
-        serie, correlativo = attrs.get('num_documento').split('-')
-        attrs['serie'] = serie
-        attrs['correlativo'] = correlativo
 
         suma = 0
         for value in attrs['items']:
@@ -187,6 +175,40 @@ class PurchaseWriteSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 {"fecha_vencimiento": "La fecha de vencimiento es menor que la fecha de documento"},
                 code='fven<fdoc')
+
+        if attrs['tipo_documento'] in '123':
+            if "-" not in attrs['num_documento']:
+                raise serializers.ValidationError(
+                    {"num_documento": "El número de documento debe tener un guion"},
+                    code='guion')
+
+            serie, correlativo = attrs.get('num_documento').split('-')
+            attrs['serie'] = serie
+            attrs['correlativo'] = correlativo
+
+            if len(attrs['serie']) != 4:
+                raise serializers.ValidationError(
+                    {"num_documento": "El valor de serie no tiene 4 caracteres"},
+                     code='serie4')
+
+            if attrs['serie'][0] not in "FBE0":
+                raise serializers.ValidationError(
+                    {"num_documento": "El valor de la serie no comienza con B,F,E o 0"},
+                    code='BorForE')
+
+            if not attrs['correlativo'].isdigit():
+                raise serializers.ValidationError(
+                    {"num_documento": "El valor de correlativo no tiene numeros"},
+                    code='corr_non_num')
+
+        else:
+            attrs['serie'] = ''
+            attrs['correlativo'] = attrs['num_documento']
+
+        if not attrs['correlativo'].isdigit():
+            raise serializers.ValidationError(
+                {"num_documento": "El valor de correlativo no tiene numeros"},
+                code='corr_non_num')
 
         igv_int = round(attrs["total"] * 18 / 118)
         if attrs["igv"] != igv_int:
