@@ -47,8 +47,12 @@ class Supplier(BaseModel):
 class Purchase(BaseModel):
     """Model definition for Purchase."""
     COMPROBANTE = (
+        ('0', 'INTERNO'),
         ('1', '01-FACTURA'),
         ('3', '03-BOLETA'),
+        ('2', 'RECIBO POR HONORARIOS'),
+        ('13', 'CONSTANCIA DE DEPOSITO'),
+        ('14', 'RECIBOS POR SERVICIO')
     )
 
     MONEDA = (
@@ -56,7 +60,7 @@ class Purchase(BaseModel):
         ('USD', 'Dolares'),
     )
 
-    proveedor = models.ForeignKey(Supplier, on_delete=models.PROTECT, null=False)
+    proveedor = models.ForeignKey(Supplier, on_delete=models.PROTECT, null=True)
     tipo_documento = models.CharField('tipo de documento', max_length=20, choices=COMPROBANTE)
     num_documento = models.CharField('numero de documento', max_length=13, help_text='factura/boleta')
     serie = models.CharField('serie', max_length=4)
@@ -65,9 +69,10 @@ class Purchase(BaseModel):
     fecha_vencimiento = models.DateField('fecha de vencimiento del comprobante', auto_now=False, auto_now_add=False)
     moneda = models.CharField('moneda', max_length=20, choices=MONEDA, default='PEN')
     observacion = models.TextField(null=True, default=None, blank=True)
-    # total = models.CharField('total', max_length=10, default="0.00", blank=False, null=False)
     total = models.IntegerField('total', default=0, blank=False, null=False)  # /100 to repr
     igv = models.IntegerField('igv', default=0, blank=False, null=False)  # /100 to repr
+    abonado = models.IntegerField('total', default=0, blank=False, null=False)  # /100 to repr
+    pagada = models.BooleanField('pago completado', default=True, null=False)
 
     class Meta:
         """Meta definition for Purchase."""

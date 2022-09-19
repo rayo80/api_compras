@@ -56,7 +56,7 @@ class ItemPurchaseSerializerTest(TestCase):
             {
                 "producto": prod1_copy,
                 "cantidad": 19,
-                "total_item": 32,
+                "total_item": 3200,
                 "compra": self.purchase,
             },
             {
@@ -83,6 +83,10 @@ class ItemPurchaseSerializerTest(TestCase):
         self.assertEqual(er.exception.detail['cantidad'][0].code, 'cant_zero')
 
     def test_create_incrementa_stock(self):
+        """Aca solo testeo que mi funcion create
+        del serializer realice el incremento
+        correctamente"""
+
         actual_stock = self.product1.stock
         # solo un valor de la lista de creación
         test_data = [self.to_created_data[0], ]

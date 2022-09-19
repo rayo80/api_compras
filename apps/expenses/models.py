@@ -9,28 +9,18 @@ from apps.sales.models import CajaChica
 class PaymentOrder(BaseModel):
     """Model definition for BaseModel."""
 
-    DOCUMENTO = (
-        ('1', '01-FACTURA'),
-        ('3', '03-BOLETA'),
-        ('x', 'RECIBO POR HONORARIOS')
-        ('x', 'CONSTANCIA DE DEPOSITO')
-        ('x', 'RECIBOS POR SERVICIO')
-    )
 
     MONEDA = (
         ('PEN', 'Soles'),
         ('USD', 'Dolares'),
     )
 
-    tipo_documento = models.CharField('tipo de documento', max_length=20, choices=DOCUMENTO)
-    num_documento = models.CharField('numero de documento', max_length=13, help_text='numero')
-
     aprobada = models.BooleanField(default=False)
     caja_id = models.ForeignKey(CajaChica, null=True)
+    compra_id = models.ForeignKey(Purchase,)
     # la orden de pago que viene de caja chica generara una nueva compra "pago" con un unico
     # item asociado a un producto que sera nuestro concepto de egreso
     pagos = models.OneToOneField(Purchase, on_delete=models.CASCADE)  # jala el total de la compra
-    fecha_documento = models.DateField('fecha de emision del comprobante', auto_now=False, auto_now_add=False)
     moneda = models.CharField('moneda', max_length=20, choices=MONEDA, default='PEN')
     detalle = models.TextField(null=True, default=None, blank=True)
     total = models.IntegerField('total', default=0, blank=False, null=False)  # /100 to repr
@@ -53,7 +43,7 @@ class Transaction(BaseModel):
     observacion = models.TextField(null=True, default=None, blank=True)
     abono = models.IntegerField('total', default=0, blank=False, null=False)  # /100 to repr
     payment_order = models.OneToOneField(Item, on_delete=models.CASCADE, null=True)
-
+    # caja_central
     class Meta:
         """Meta definition for BaseModel."""
         abstract = True
