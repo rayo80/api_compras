@@ -262,13 +262,32 @@ class PurchaseWriteSerializerTest(TestCase):
         self.item1_instance = Item.objects.create(**self.item1_attributes)
         self.item2_instance = Item.objects.create(**self.item2_attributes)
 
+    # SUPPLIER
     def test_no_exits_supplier(self):
         test_data = self.serializer_data
         test_data['proveedor'] = '500'
         serializer = PurchaseWriteSerializer(data=test_data)
         with self.assertRaises(ValidationError) as er:
             serializer.is_valid(raise_exception=True)
-        self.assertEqual(er.exception.detail['proveedor'][0].code, 'does_not_exist')
+        self.assertEqual(er.exception.detail['proveedor'][0].code,
+                         'does_not_exist')
+
+    def test_supplier_is_not_necesary(self):
+        test_data = self.serializer_data
+        test_data['proveedor'] = None
+        test_data['tipo_documento'] = '0'
+        serializer = PurchaseWriteSerializer(data=test_data)
+        self.assertTrue(serializer.is_valid(raise_exception=True))
+
+    def test_supplier_is_obligatory(self):
+        test_data = self.serializer_data
+        test_data['proveedor'] = None
+        test_data['tipo_documento'] = '1'
+        serializer = PurchaseWriteSerializer(data=test_data)
+        with self.assertRaises(ValidationError) as er:
+            serializer.is_valid(raise_exception=True)
+        self.assertEqual(er.exception.detail['proveedor'][0].code,
+                         'supplier_need')
 
     def test_no_exits_products(self):
         test_data = self.serializer_data
@@ -301,10 +320,10 @@ class PurchaseWriteSerializerTest(TestCase):
     def test_validate_igv_purchase(self):
         test_data = self.serializer_data
         test_data['igv'] = 21.60
+        test_data['tipo_documento'] = '1'
         serializer = PurchaseWriteSerializer(data=test_data)
         with self.assertRaises(ValidationError) as er:
             serializer.is_valid(raise_exception=True)
-        print(er.exception.detail)
         self.assertEqual(er.exception.detail['igv'][0].code, 'dif_igv')
 
     # validate total
@@ -342,7 +361,7 @@ class PurchaseWriteSerializerTest(TestCase):
         serializer = PurchaseWriteSerializer(data=test_data)
         self.assertEqual(serializer.is_valid(), True)
 
-    # num_documento
+    # NUM DOCUMENTO
     def test_validate_num_documento_is_not_blank(self):
         test_data = self.serializer_data
         test_data['num_documento'] = ''
@@ -399,7 +418,7 @@ class PurchaseWriteSerializerTest(TestCase):
         # {'non_field_errors': [ErrorDetail(string='El valor de correlativo no tiene numeros', code='corr_non_num')]}
         # {'num_documento': [ErrorDetail(string='El valor de correlativo no tiene numeros', code='corr_non_num')]}
 
-    # fecha documento
+    # FECHA DOCUMENTO
     def test_validate_fecha_documento_is_invalid(self):
         test_data = self.serializer_data
         test_data['fecha_documento'] = ''
@@ -436,16 +455,17 @@ class PurchaseWriteSerializerTest(TestCase):
             serializer.is_valid(raise_exception=True)
         self.assertEqual(er.exception.detail['fecha_vencimiento'][0].code, 'null')
 
-    def test_validate_fecha_vencimiento_is_not_less_than_fdom(self):
+    def test_fecha_venc_not_menor(self):
         test_data = self.serializer_data
         test_data['fecha_documento'] = '2022-04-02'
         test_data['fecha_vencimiento'] = '2022-04-01'
         serializer = PurchaseWriteSerializer(data=test_data)
         with self.assertRaises(ValidationError) as er:
             serializer.is_valid(raise_exception=True)
-        self.assertEqual(er.exception.detail['fecha_vencimiento'][0].code,
-                         'fven<fdoc')
+        print(er.exception.detail)
+        self.assertEqual(er.exception.detail['fecha_vencimiento'][0].code, 'fven<fdoc')
 
+    # CREATE CASES
     def test_create_multiple_fields_serializer(self):
         test_data = self.serializer_data
         serializer = PurchaseWriteSerializer(data=test_data)

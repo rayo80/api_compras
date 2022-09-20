@@ -138,25 +138,6 @@ class PurchaseWriteSerializer(serializers.ModelSerializer):
         return int(value*100)
 
     def validate_num_documento(self, value):
-        """
-                serie, correlativo = value.split("-")
-
-        if len(serie) != 4:
-            raise serializers.ValidationError("El valor de serie no tiene 4 caracteres", code='serie4')
-
-        if serie[0] not in "FBE":
-            raise serializers.ValidationError("El valor de la serie no comienza con B , F o E", code='BorForE')
-
-        if not correlativo.isdigit():
-            raise serializers.ValidationError("El valor de correlativo no tiene numeros", code='corr_non_num')
-        """
-
-        return value
-
-    def validate_fecha_vencimiento(self, value):
-        fecha_documento = self.initial_data.get('fecha_documento')
-        if value == '' or value is None:
-            value = fecha_documento
         return value
 
     def validate(self, attrs):
@@ -196,6 +177,11 @@ class PurchaseWriteSerializer(serializers.ModelSerializer):
                     {"num_documento": "El valor de la serie no comienza con B,F,E o 0"},
                     code='BorForE')
 
+            if not attrs['proveedor']:
+                raise serializers.ValidationError(
+                    {"proveedor": "Este campo es necesario para este tipo de documentos"},
+                    code='supplier_need')
+
             if not attrs['correlativo'].isdigit():
                 raise serializers.ValidationError(
                     {"num_documento": "El valor de correlativo no tiene numeros"},
@@ -205,13 +191,9 @@ class PurchaseWriteSerializer(serializers.ModelSerializer):
             attrs['serie'] = ''
             attrs['correlativo'] = attrs['num_documento']
 
-        if not attrs['correlativo'].isdigit():
-            raise serializers.ValidationError(
-                {"num_documento": "El valor de correlativo no tiene numeros"},
-                code='corr_non_num')
-
+        # Por ahora el igv es fijo  y va para facturas y boletas
         igv_int = round(attrs["total"] * 18 / 118)
-        if attrs["igv"] != igv_int:
+        if attrs["igv"] != igv_int and (attrs["tipo_documento"] in '13'):
             raise serializers.ValidationError(
                 {"igv": "El IGV no coincide"},
                 code='dif_igv')
